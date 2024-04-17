@@ -29,4 +29,17 @@ public interface EmployeeService extends IService<Employee> {
      * @return
      */
     PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
+
+    /**
+     * 启用,禁用员工信息
+     * @param id
+     * @param status
+     */
+    void updateStatus(Long id, Integer status);
+
+    /**
+     * 编辑员工信息
+     * @param employeeDTO
+     */
+    void updateEmp(EmployeeDTO employeeDTO);
 }

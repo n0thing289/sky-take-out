@@ -1,7 +1,7 @@
 package com.sky.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -121,6 +121,37 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         //封装查询结果并返回
         PageInfo<Employee> info = new PageInfo<>(employeeList);
         return new PageResult(info.getTotal(), info.getList());
+    }
+
+    /**
+     * 启用, 禁用员工账号
+     * @param id
+     * @param status
+     */
+    @Override
+    public void updateStatus(Long id, Integer status) {
+        //创建修改条件
+        LambdaUpdateWrapper<Employee> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.set(Employee::getStatus, status)
+                .eq(Employee::getId, id);//id必填
+        //修改
+        employeeMapper.update(wrapper);
+    }
+
+    /**
+     * 编辑员工信息
+     * @param employeeDTO
+     */
+    @Override
+    public void updateEmp(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        //对象复制
+        BeanUtils.copyProperties(employeeDTO, employee);
+        //设置修改时间和修改人
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateUser(BaseContext.getCurrentId());
+        //修改表
+        employeeMapper.updateById(employee);
     }
 
 }
