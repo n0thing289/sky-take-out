@@ -1,17 +1,23 @@
 package com.sky.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
+import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
 
 import org.springframework.beans.BeanUtils;
@@ -20,6 +26,7 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Service
@@ -66,6 +73,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
 
     /**
      * 新增员工
+     *
      * @param employeeDTO
      */
     @Override
@@ -87,6 +95,32 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         employee.setUpdateUser(currentId);
         //交给mapper去添加用户
         employeeMapper.insert(employee);
+    }
+
+    /**
+     * 员工分页查询
+     *
+     * @param employeePageQueryDTO
+     * @return
+     */
+    @Override
+    public PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
+        //获取分页信息
+        int current = employeePageQueryDTO.getPage();
+        int pageSize = employeePageQueryDTO.getPageSize();
+        //获取姓名
+        String name = employeePageQueryDTO.getName();
+        //设置查询条件
+        LambdaQueryWrapper<Employee> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(name!=null, Employee::getName, name)
+                .orderByDesc(Employee::getCreateTime);
+        //开始分页
+        PageHelper.startPage(current, pageSize);
+        //查询
+        List<Employee> employeeList = employeeMapper.selectList(wrapper);
+        //封装查询结果并返回
+        PageInfo<Employee> info = new PageInfo<>(employeeList);
+        return new PageResult(info.getTotal(), info.getList());
     }
 
 }
