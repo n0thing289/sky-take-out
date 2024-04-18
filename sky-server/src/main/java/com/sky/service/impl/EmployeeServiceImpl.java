@@ -89,7 +89,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
         employee.setCreateTime(LocalDateTime.now());
         employee.setUpdateTime(LocalDateTime.now());
         //设置当前记录创建人和修改人id
-        //TODO 后期需要改为当前登录用户id
+        //当前登录用户id
         Long currentId = BaseContext.getCurrentId();
         employee.setCreateUser(currentId);
         employee.setUpdateUser(currentId);
