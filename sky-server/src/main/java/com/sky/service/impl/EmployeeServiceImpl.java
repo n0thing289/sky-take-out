@@ -129,10 +129,13 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @param status
      */
     @Override
-    public void updateStatus(Long id, Integer status) {
+    public void startOrStop(Long id, Integer status) {
         //创建修改条件
+        //update employee set status=#{},update_time=#{},update_user=#{} where id = #{}
         LambdaUpdateWrapper<Employee> wrapper = new LambdaUpdateWrapper<>();
         wrapper.set(Employee::getStatus, status)
+                .set(Employee::getUpdateTime, LocalDateTime.now())
+                .set(Employee::getUpdateUser, BaseContext.getCurrentId())
                 .eq(Employee::getId, id);//id必填
         //修改
         employeeMapper.update(wrapper);
@@ -143,7 +146,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @param employeeDTO
      */
     @Override
-    public void updateEmp(EmployeeDTO employeeDTO) {
+    public void editEmp(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         //对象复制
         BeanUtils.copyProperties(employeeDTO, employee);

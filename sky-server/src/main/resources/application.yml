@@ -24,7 +24,7 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
-  mapper-locations: classpath:mapper/*.xml
+  mapper-locations: classpath*:/com/sky/mapper/*.xml
   type-aliases-package: com.sky.entity
   configuration:
     map-underscore-to-camel-case: true

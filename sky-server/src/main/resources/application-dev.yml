@@ -1,8 +1,17 @@
 sky:
   datasource:
+#    p6服务器的mysql
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    host: 192.168.3.85
+#    port: 3306
+#    database: sky_take_out
+#    username: p6
+#    password: 289273
+
+#   本地mysql
     driver-class-name: com.mysql.cj.jdbc.Driver
-    host: 192.168.3.85
+    host: 127.0.0.1
     port: 3306
     database: sky_take_out
-    username: p6
-    password: 289273
+    username: root
+    password: hsp

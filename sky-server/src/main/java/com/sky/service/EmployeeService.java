@@ -35,11 +35,11 @@ public interface EmployeeService extends IService<Employee> {
      * @param id
      * @param status
      */
-    void updateStatus(Long id, Integer status);
+    void startOrStop(Long id, Integer status);
 
     /**
      * 编辑员工信息
      * @param employeeDTO
      */
-    void updateEmp(EmployeeDTO employeeDTO);
+    void editEmp(EmployeeDTO employeeDTO);
 }

@@ -1,6 +1,5 @@
 package com.sky.controller.admin;
 
-import com.github.pagehelper.PageInfo;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
@@ -14,15 +13,11 @@ import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,7 +57,7 @@ public class EmployeeController {
     @ApiOperation("编辑员工信息")
     public Result updateEmp(@RequestBody EmployeeDTO employeeDTO){
         log.info("编辑员工信息: 参数为{}", employeeDTO);
-        employeeService.updateEmp(employeeDTO);
+        employeeService.editEmp(employeeDTO);
         return Result.success();
     }
 
@@ -76,7 +71,7 @@ public class EmployeeController {
     @ApiOperation("启用, 禁用员工账号")
     public Result startOrStop(@PathVariable Integer status, @RequestParam Long id){
         log.info("启用, 禁用员工账号: 参数为status={} id={}",status, id);
-        employeeService.updateStatus(id, status);
+        employeeService.startOrStop(id, status);
         return Result.success();
     }
 
