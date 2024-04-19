@@ -5,6 +5,13 @@ package com.sky.constant;
  */
 public class AutoFillConstant {
     /**
+     * 实体类中的属性名称 (mp使用)
+     */
+    public static final String CREATE_TIME = "createTime";
+    public static final String UPDATE_TIME = "updateTime";
+    public static final String CREATE_USER = "createUser";
+    public static final String UPDATE_USER = "updateUser";
+    /**
      * 实体类中的方法名称
      */
     public static final String SET_CREATE_TIME = "setCreateTime";
