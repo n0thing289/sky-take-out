@@ -1,17 +1,27 @@
 sky:
   datasource:
-#    p6服务器的mysql
-#    driver-class-name: com.mysql.cj.jdbc.Driver
-#    host: 192.168.3.85
-#    port: 3306
-#    database: sky_take_out
-#    username: p6
-#    password: 289273
+    #    p6服务器的mysql
+    #    driver-class-name: com.mysql.cj.jdbc.Driver
+    #    host: 192.168.3.85
+    #    port: 3306
+    #    database: sky_take_out
+    #    username: p6
+    #    password: 289273
 
-#   本地mysql
+    #   本地mysql
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: 127.0.0.1
     port: 3306
     database: sky_take_out
     username: root
     password: hsp
+  alioss:
+#    https://sky-take-out-weikai.oss-cn-shenzhen.aliyuncs.com/
+    endpoint: oss-cn-shenzhen.aliyuncs.com
+    access-key-id: LTAI5tSnh8c9yYUzLrAeB2X2
+    access-key-secret: tvdMag7lnsURXN5029Xo3h4869NUfr
+    bucket-name: sky-take-out-weikai
+#    endpoint: oss-cn-beijing.aliyuncs.com
+#    access-key-id: LTAI5tPeFLzsPPT8gG3LPW64
+#    access-key-secret: U6k1br0Z8ga0IXv3nXbulGTUzy6Pd7
+#    bucket-name: sky-itcast
