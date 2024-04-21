@@ -22,9 +22,11 @@ import com.sky.service.EmployeeService;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -41,6 +43,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @param employeeLoginDTO
      * @return
      */
+    @Transactional(readOnly = true)
     public Employee login(EmployeeLoginDTO employeeLoginDTO) {
         String username = employeeLoginDTO.getUsername();
         String password = employeeLoginDTO.getPassword();
@@ -77,6 +80,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @param employeeDTO
      */
     @Override
+    @Transactional(rollbackFor = SQLException.class)
     public void save(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         //对象属性拷贝
@@ -104,6 +108,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
         //获取分页信息
         int current = employeePageQueryDTO.getPage();
@@ -129,6 +134,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @param status
      */
     @Override
+    @Transactional(rollbackFor = SQLException.class)
     public void startOrStop(Long id, Integer status) {
         //创建修改条件
         //update employee set status=#{},update_time=#{},update_user=#{} where id = #{}
@@ -146,6 +152,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
      * @param employeeDTO
      */
     @Override
+    @Transactional(rollbackFor = SQLException.class)
     public void editEmp(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         //对象复制
