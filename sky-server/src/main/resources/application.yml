@@ -57,7 +57,6 @@ sky:
     admin-ttl: 99999999999999 #开发环境设置久点
     # 设置前端传递过来的令牌名称
     admin-token-name: token
-<<<<<<< HEAD
 
 #  微信登录，用户使用的配置
       # 设置jwt签名加密时使用的秘钥
@@ -78,5 +77,3 @@ sky:
     appid: ${sky.wechat.appid}
     secret: ${sky.wechat.secret}
 
-=======
->>>>>>> parent of 633a894 (1.新增菜品代码开发完毕)
