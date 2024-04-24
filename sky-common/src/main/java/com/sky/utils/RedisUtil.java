@@ -4,6 +4,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +50,15 @@ public class RedisUtil {
         redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.MILLISECONDS);
     }
 
-    public void del(String key) {
+    public void delete(String key) {
         redisTemplate.delete(key);
+    }
+
+    public void deleteBatch(Collection keys) {
+        redisTemplate.delete(keys);
+    }
+
+    public Set keys(String pattern){
+        return redisTemplate.keys(pattern);
     }
 }

@@ -6,6 +6,7 @@ import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
+import com.sky.utils.RedisUtil;
 import com.sky.vo.DishVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/admin/dish")
@@ -22,6 +24,9 @@ import java.util.List;
 public class DishController {
     @Resource
     private DishService dishService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     /**
      * 菜品起售, 停售
@@ -32,6 +37,9 @@ public class DishController {
     Result startOrStop(@PathVariable Integer status, Long id){
         log.info("菜品起售, 停售: status={},id={}", status,id);
         dishService.startOrStop(status, id);
+
+        //将所有的菜品缓存数据清理掉
+        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -82,6 +90,9 @@ public class DishController {
     Result updateDish(@RequestBody DishDTO dto){
         log.info("修改菜品: dto={}", dto);
         dishService.update(dto);
+
+        //将所有的菜品缓存数据清理掉
+        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -94,6 +105,8 @@ public class DishController {
     Result deleteBatchDish(@RequestParam List<Long> ids){
         log.info("批量删除菜品: ids={}", ids);
         dishService.deleteBatch(ids);
+
+        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -106,7 +119,16 @@ public class DishController {
     Result saveDish(@RequestBody DishDTO dto){
         log.info("新增菜品: dto={}", dto);
         dishService.saveWithFlavor(dto);
+
+        //清除缓存数据
+        String key = "dish_" + dto.getCategoryId();
+        redisUtil.delete(key);
         return Result.success();
     }
 
+    private void cleanCache(String pattern){
+        //将所有的菜品缓存数据清理掉
+        Set<?> keys = redisUtil.keys(pattern);
+        redisUtil.deleteBatch(keys);
+    }
 }

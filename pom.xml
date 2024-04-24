@@ -34,7 +34,22 @@
         <poi>3.16</poi>
     </properties>
     <dependencyManagement>
+
         <dependencies>
+            <!--//解决jackon 序列化LocalDateTime错误需要的依赖-->
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>2.12.3</version>
+            </dependency>
+
+
+            <!--httpclient-->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.14</version>
+            </dependency>
             <!--redis-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>

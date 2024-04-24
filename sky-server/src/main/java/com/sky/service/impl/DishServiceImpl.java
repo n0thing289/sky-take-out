@@ -231,4 +231,31 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
                 .eq(Dish::getId, id);
         dishMapper.update(dish, wrapper);
     }
+
+    /**
+     * 条件查询菜品和口味
+     * @param dish
+     * @return
+     */
+    public List<DishVO> listWithFlavor(Dish dish) {
+        List<Dish> dishList = dishMapper.selectList(Wrappers.lambdaQuery(dish));//TODO 可能不对
+//        .eq(Dish::getCategoryId, dish.getCategoryId())
+//                .eq(Dish::getStatus, dish.getStatus())
+
+        List<DishVO> dishVOList = new ArrayList<>();
+
+        for (Dish d : dishList) {
+            DishVO dishVO = new DishVO();
+            BeanUtils.copyProperties(d,dishVO);
+
+            //根据菜品id查询对应的口味
+            List<DishFlavor> flavors = dishFlavorMapper.selectList(Wrappers.lambdaQuery(DishFlavor.class)
+                    .eq(DishFlavor::getDishId, d.getId()));
+
+            dishVO.setFlavors(flavors);
+            dishVOList.add(dishVO);
+        }
+
+        return dishVOList;
+    }
 }

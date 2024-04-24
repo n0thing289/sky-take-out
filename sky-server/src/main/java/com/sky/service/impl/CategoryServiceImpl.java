@@ -43,6 +43,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     /**
      * 根据id删除
+     *
      * @param id
      */
     @Override
@@ -50,12 +51,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public void removeById(Long id) {
         //查询当前分类是否关联了菜品, 如果关联就抛出异常
         int count = dishMapper.countByCategoryId(id);
-        if (count>0){
+        if (count > 0) {
             throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
         }
         //查询当前分类是否关联了套餐, 如果关联就抛出异常
         count = setmealMapper.countByCategoryId(id);
-        if (count>0){
+        if (count > 0) {
             throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_SETMEAL);
         }
         //删除
@@ -111,6 +112,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     /**
      * 根据类型查询分类
+     *
      * @param type
      * @return
      */
@@ -119,7 +121,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public List<Category> listByType(Integer type) {
         //查询条件
         LambdaQueryWrapper<Category> wrapper = Wrappers.lambdaQuery(Category.class)
-                .eq(Category::getType, type)
+                .eq(type != null, Category::getType, type)
                 .orderByAsc(Category::getSort);
         //查询
         return categoryMapper.selectList(wrapper);
@@ -127,6 +129,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     /**
      * 新增分类
+     *
      * @param categoryDTO
      */
     @Override
@@ -151,6 +154,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     /**
      * 修改分类
+     *
      * @param categoryDTO
      */
     @Override

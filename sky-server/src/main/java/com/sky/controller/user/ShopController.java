@@ -13,9 +13,9 @@ import javax.annotation.Resource;
 import java.util.Objects;
 
 @RestController("userShopController")
-@RequestMapping("/user/shop")
+@RequestMapping("/user")
 @Slf4j
-@Api(tags="店铺相关接口")
+@Api(tags="C端-店铺相关接口")
 public class ShopController {
 
     @Resource
@@ -25,10 +25,11 @@ public class ShopController {
      * 用户端端查询营业状态
      * @return
      */
-    @GetMapping
-    @ApiOperation("管理端查询营业状态")
+    @GetMapping("/shop/status")
+    @ApiOperation("用户端端查询营业状态")
     Result<?> getShopStatusByUser(){
-
+        Integer status = (Integer) redisUtil.get(RedisConstant.SHOP_STATUS);
+        log.info("用户端端查询营业状态: {}", Objects.equals(status, StatusConstant.ENABLE) ? "营业中" : "打烊中");
         return Result.success();
     }
 }
