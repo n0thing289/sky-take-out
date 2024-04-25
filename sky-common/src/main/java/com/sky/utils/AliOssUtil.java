@@ -65,4 +65,5 @@ public class AliOssUtil {
 
         return stringBuilder.toString();
     }
+    //TODO阿里云的图片也要删!!!
 }

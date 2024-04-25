@@ -5,8 +5,10 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
+import com.sky.entity.Category;
 import com.sky.entity.Setmeal;
 import com.sky.entity.SetmealDish;
+import com.sky.mapper.CategoryMapper;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealDishMapper;
 import com.sky.mapper.SetmealMapper;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,6 +39,8 @@ public class SetmealServiceImpl implements SetmealService {
     private SetmealDishMapper setmealDishMapper;
     @Resource
     private DishMapper dishMapper;
+    @Resource
+    private CategoryMapper categoryMapper;
 
     /**
      * 条件查询
@@ -68,15 +73,29 @@ public class SetmealServiceImpl implements SetmealService {
     public PageResult pageQuery(SetmealPageQueryDTO setmealPageQueryDTO) {
         //
         PageHelper.startPage(setmealPageQueryDTO.getPage(), setmealPageQueryDTO.getPageSize());
-        //
-        Setmeal setmeal = new Setmeal();
-        BeanUtils.copyProperties(setmealPageQueryDTO, setmeal);
+        //查询套餐
+        String name = setmealPageQueryDTO.getName();
+        Integer categoryId = setmealPageQueryDTO.getCategoryId();
+        Integer status = setmealPageQueryDTO.getStatus();
         List<Setmeal> setmeals = setmealMapper.selectList(Wrappers.lambdaQuery(Setmeal.class)
-                .like(setmeal.getName() != null, Setmeal::getName, setmeal.getName())
-                .eq(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId())
-                .eq(setmeal.getStatus() != null, Setmeal::getStatus, setmeal.getStatus()));
+                .like(name != null, Setmeal::getName, name)
+                .eq(categoryId != null, Setmeal::getCategoryId, categoryId)
+                .eq(status != null, Setmeal::getStatus, status));
         PageInfo<Setmeal> pageInfo = new PageInfo<>(setmeals);
-        return new PageResult(pageInfo.getTotal(), pageInfo.getList());
+        //封装数据对象
+        ArrayList<SetmealVO> setmealVOS = new ArrayList<>();
+        pageInfo.getList().parallelStream().forEachOrdered(setmeal -> {
+            SetmealVO setmealVO = new SetmealVO();
+            BeanUtils.copyProperties(setmeal, setmealVO);
+            //查询分类name
+            String categoryName = categoryMapper.selectOne(Wrappers.lambdaQuery(Category.class)
+                    .select(Category::getName)
+                    .eq(Category::getId, setmeal.getCategoryId())).getName();
+            setmealVO.setCategoryName(categoryName);
+            //添加到vos
+            setmealVOS.add(setmealVO);
+        });
+        return new PageResult(pageInfo.getTotal(), setmealVOS);
     }
 
     /**
@@ -114,7 +133,7 @@ public class SetmealServiceImpl implements SetmealService {
         setmealDTO.getSetmealDishes()
                 .forEach(setmealDish -> {
                     //设置setmeal_id
-                    setmealDish.setSetmealId(setmealDTO.getId());
+                    setmealDish.setSetmealId(setmeal.getId());
                     setmealDishMapper.insert(setmealDish);
                 });
     }
@@ -146,10 +165,15 @@ public class SetmealServiceImpl implements SetmealService {
         //修改套餐
         setmealMapper.updateById(setmeal);
         //修改套餐菜品
+        //1. 删除该套餐下旧的数据
+        setmealDishMapper.delete(Wrappers.lambdaQuery(SetmealDish.class)
+                .eq(SetmealDish::getSetmealId, setmeal.getId()));
+        //2. 添加dto的setmealdish数据
         setmealDTO.getSetmealDishes()
                 .forEach(setmealDish -> {
-                    setmealDishMapper.update(setmealDish, Wrappers.lambdaUpdate(SetmealDish.class)
-                            .eq(SetmealDish::getSetmealId, setmealDTO.getId()));
+                    //设置setmeal_id
+                    setmealDish.setSetmealId(setmeal.getId());
+                    setmealDishMapper.insert(setmealDish);
                 });
 
     }
