@@ -1,10 +1,12 @@
 package com.sky.dto;
 
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.io.Serializable;
 
 @Data
+@ApiModel("菜品分页查询时需要传递的数据对象")
 public class DishPageQueryDTO implements Serializable {
 
     private int page;
