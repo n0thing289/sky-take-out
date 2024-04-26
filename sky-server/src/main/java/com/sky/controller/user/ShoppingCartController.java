@@ -23,6 +23,14 @@ public class ShoppingCartController {
     @Resource
     private ShoppingCartService shoppingCartService;
 
+    @PostMapping("/sub")
+    @ApiOperation("删除购物车中一个商品")
+    public Result cleanSub(@RequestBody ShoppingCartDTO shoppingCartDTO){
+        log.info("删除购物车中一个商品");
+        shoppingCartService.cleanSub(shoppingCartDTO);
+        return Result.success();
+    }
+
     /**
      * 清空购物车
      * @return

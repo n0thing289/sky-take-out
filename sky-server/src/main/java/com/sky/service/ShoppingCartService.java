@@ -11,4 +11,10 @@ public interface ShoppingCartService extends IService<ShoppingCart> {
      */
     void save(ShoppingCartDTO shoppingCartDTO);
 
+    /**
+     * 删除购物车中一个商品
+     * @param shoppingCartDTO
+     */
+    void cleanSub(ShoppingCartDTO shoppingCartDTO);
+
 }

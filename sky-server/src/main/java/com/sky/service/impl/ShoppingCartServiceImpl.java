@@ -86,4 +86,18 @@ public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, Sho
             shoppingCartMapper.insert(shoppingCart);
         }
     }
+
+    /**
+     * 删除购物车中一个商品
+     *
+     * @param shoppingCartDTO
+     */
+    @Override
+    public void cleanSub(ShoppingCartDTO shoppingCartDTO) {
+        shoppingCartMapper.delete(Wrappers.lambdaQuery(ShoppingCart.class)
+                .eq(ShoppingCart::getUserId, BaseContext.getCurrentId())
+                .eq(shoppingCartDTO.getDishId() != null, ShoppingCart::getDishId, shoppingCartDTO.getDishId())
+                .eq(shoppingCartDTO.getDishFlavor() != null, ShoppingCart::getDishFlavor, shoppingCartDTO.getDishFlavor())
+                .eq(shoppingCartDTO.getSetmealId() != null, ShoppingCart::getSetmealId, shoppingCartDTO.getSetmealId()));
+    }
 }
