@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 @Service
+@Transactional
 public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements DishService {
 
     @Resource

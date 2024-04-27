@@ -21,7 +21,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Service
-@Transactional(rollbackFor = SQLException.class)
+@Transactional
 public class ShoppingCartServiceImpl extends ServiceImpl<ShoppingCartMapper, ShoppingCart> implements ShoppingCartService {
 
     @Resource

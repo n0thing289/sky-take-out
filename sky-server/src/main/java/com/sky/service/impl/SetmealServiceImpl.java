@@ -30,7 +30,7 @@ import java.util.List;
  * 套餐业务实现
  */
 @Service
-@Transactional(rollbackFor = SQLException.class)
+@Transactional
 public class SetmealServiceImpl implements SetmealService {
 
     @Resource

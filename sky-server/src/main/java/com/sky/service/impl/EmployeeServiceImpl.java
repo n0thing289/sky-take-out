@@ -32,6 +32,7 @@ import java.util.List;
 
 
 @Service
+@Transactional
 public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> implements EmployeeService {
 
     @Resource

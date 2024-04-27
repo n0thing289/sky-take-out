@@ -5,15 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.OrdersSubmitDTO;
-import com.sky.entity.AddressBook;
-import com.sky.entity.Orders;
-import com.sky.entity.ShoppingCart;
+import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
-import com.sky.mapper.AddressBookMapper;
-import com.sky.mapper.OrderDetailMapper;
-import com.sky.mapper.OrderMapper;
-import com.sky.mapper.ShoppingCartMapper;
+import com.sky.mapper.*;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderSubmitVO;
 import org.springframework.beans.BeanUtils;
@@ -24,10 +19,11 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Transactional(rollbackFor = SQLException.class)
+@Transactional
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implements OrderService {
 
     @Resource
@@ -41,6 +37,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
     @Resource
     private ShoppingCartMapper shoppingCartMapper;
+
+    @Resource
+    private UserMapper userMapper;
 
     /**
      * 用户下单
@@ -66,20 +65,37 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
         //向订单表插入一条数据
         Orders orders = new Orders();
         BeanUtils.copyProperties(ordersSubmitDTO, orders);
-        orders.setNumber(String.valueOf(System.currentTimeMillis()));
+        String orderNumber = String.valueOf(System.currentTimeMillis());
+        orders.setNumber(orderNumber);
         orders.setStatus(Orders.PENDING_PAYMENT);
         orders.setUserId(BaseContext.getCurrentId());
-        orders.setOrderTime(LocalDateTime.now());
+        LocalDateTime orderTime = LocalDateTime.now();
+        orders.setOrderTime(orderTime);
         orders.setPayStatus(Orders.UN_PAID);
         orders.setPhone(addressBook.getPhone());
         orders.setAddress(addressBook.getProvinceName() + addressBook.getCityName() + addressBook.getDistrictName() + addressBook.getDetail());
+        orders.setUserName(userMapper.selectById(BaseContext.getCurrentId()).getName());
         orders.setConsignee(addressBook.getConsignee());
-
+        orderMapper.insert(orders);
         //向订单明细插入n条数据
-
+        ArrayList<Long> shoppingCartIds = new ArrayList<>();
+        shoppingCarts.forEach(shoppingCart -> {
+            OrderDetail orderDetail = new OrderDetail();
+            BeanUtils.copyProperties(shoppingCart, orderDetail, "id");
+            //设置订单id
+            orderDetail.setOrderId(orders.getId());
+            orderDetailMapper.insert(orderDetail);
+            //当前的购物车id添加到list准备删除
+            shoppingCartIds.add(shoppingCart.getId());
+        });
         //清空该用户的购物车的数据
-
+        shoppingCartMapper.deleteBatchIds(shoppingCartIds);
         //封装vo
-        return null;
+        return OrderSubmitVO.builder()
+                .id(orders.getId())
+                .orderAmount(orders.getAmount())
+                .orderNumber(orderNumber)
+                .orderTime(orderTime)
+                .build();
     }
 }
