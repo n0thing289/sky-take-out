@@ -36,6 +36,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private static final String WxLoginApiUrl = "https://api.weixin.qq.com/sns/jscode2session";
 
+
+    private String name;
+    private String sex;
+    private String avatar;
     /**
      * 微信登录
      *
@@ -57,11 +61,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (ObjectUtils.isEmpty(user)) {
             user = User.builder()
                     .openid(openid)
-//                    .name(jsonObject.getString("nickName"))
+                    .name(this.name)
 //                    .phone(jsonObject.getString("phone"))
-//                    .sex(jsonObject.getString("gender"))
+                    .sex(this.sex)
 //                    .idNumber(jsonObject.getString("idNumber"))
-//                    .avatar(jsonObject.getString("avatarUrl"))
+                    .avatar(this.avatar)
                     .build();
             userMapper.insert(user);
         }
@@ -84,6 +88,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String json = HttpClientUtil.doGet(WxLoginApiUrl, map);
 
         JSONObject jsonObject = JSON.parseObject(json);
+        //设置name, sex, avatar
+        this.name = jsonObject.getString("nickName");
+        this.sex = jsonObject.getString("gender");
+        this.avatar = jsonObject.getString("avatarUrl");
         return jsonObject.getString("openid");
     }
 }
