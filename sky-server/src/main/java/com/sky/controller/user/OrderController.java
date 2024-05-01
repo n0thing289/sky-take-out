@@ -1,5 +1,7 @@
 package com.sky.controller.user;
 
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.sky.context.BaseContext;
 import com.sky.dto.OrdersDTO;
 import com.sky.dto.OrdersHistoryPageQueryDTO;
@@ -18,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController(value = "userOrderController")
 @RequestMapping("/user/order")
@@ -28,6 +32,32 @@ public class OrderController {
 
     @Resource
     private OrderService orderService;
+
+    /**
+     * 取消订单
+     * @param id
+     * @return
+     */
+    @PutMapping("/cancel/{id}")
+    @ApiOperation("取消订单")
+    public Result cancel(@PathVariable Long id){
+        log.info("取消订单: id={}",id);
+        orderService.update(Wrappers.lambdaUpdate(Orders.class)
+                .set(Orders::getStatus, Orders.CANCELLED)
+                .eq(Orders::getId, id));
+        return Result.success();
+    }
+
+    /**
+     * 客户催单
+     */
+    @GetMapping("/reminder/{id}")
+    @ApiOperation("用户催单")
+    public Result reminder(@PathVariable Long id){
+        log.info("用户催单");
+        orderService.reminder(id);
+        return Result.success();
+    }
 
     /**
      * 历史订单查询

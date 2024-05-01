@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,6 +24,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +33,9 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,6 +59,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
     @Resource
     private WeChatPayUtil weChatPayUtil;
+
+    @Resource
+    private WebSocketServer webSocketServer;
 
     /**
      * 用户下单
@@ -167,8 +174,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
                 .build();
-
         orderMapper.update(orders);
+        //支付成功, 通过websocket向客户端浏览器推送消息type, orderId, content
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 1);//1表示来单提醒, 2表示客户催单
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号: " + outTradeNo);
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 
     /**
@@ -256,6 +269,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
     /**
      * 各个状态的订单数量统计
+     *
      * @return
      */
     @Override
@@ -275,5 +289,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
                 .deliveryInProgress(Math.toIntExact(deliveryInProgress))
                 .toBeConfirmed(Math.toIntExact(toBeConfirmed))
                 .build();
+    }
+
+    /**
+     * 客户催单
+     * @param id
+     */
+    @Override
+    public void reminder(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        //用户催单, 通过websocket向客户端浏览器推送消息type, orderId, content
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 2);//1表示来单提醒, 2表示客户催单
+        map.put("orderId", id);
+        map.put("content", "订单号: " + orders.getNumber());
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 }
