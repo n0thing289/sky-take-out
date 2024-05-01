@@ -388,4 +388,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
         orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
         orderMapper.updateById(orders);
     }
+
+    /**
+     * 完成订单
+     * @param id
+     */
+    @Override
+    public void complete(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        orders.setStatus(Orders.COMPLETED);
+        orderMapper.updateById(orders);
+    }
 }
