@@ -83,7 +83,13 @@ public interface OrderService extends IService<Orders> {
 
     /**
      * 接单
+     * @param ordersConfirmDTO
+     */
+    void confirm(OrdersConfirmDTO ordersConfirmDTO);
+
+    /**
+     * 派送订单
      * @param id
      */
-    void confirm(Long id);
+    void delivery(Long id);
 }

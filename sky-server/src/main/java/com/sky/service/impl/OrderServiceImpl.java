@@ -31,6 +31,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -362,15 +363,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
     /**
      * 接单
-     * @param id
+     * @param dto
      */
     @Override
-    public void confirm(Long id) {
-        Orders orders = orderMapper.selectById(id);
+    public void confirm(OrdersConfirmDTO dto) {
+        Orders orders = orderMapper.selectById(dto.getId());
         if (ObjectUtils.isEmpty(orders)){
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
         orders.setStatus(Orders.CONFIRMED);
+        orderMapper.updateById(orders);
+    }
+
+    /**
+     * 派送订单
+     * @param id
+     */
+    @Override
+    public void delivery(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        orders.setStatus(Orders.DELIVERY_IN_PROGRESS);
         orderMapper.updateById(orders);
     }
 }
