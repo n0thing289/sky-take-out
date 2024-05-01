@@ -98,4 +98,10 @@ public interface OrderService extends IService<Orders> {
      * @param id
      */
     void complete(Long id);
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    void rejection(OrdersRejectionDTO ordersRejectionDTO);
 }

@@ -402,4 +402,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
         orders.setStatus(Orders.COMPLETED);
         orderMapper.updateById(orders);
     }
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    @Override
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders orders = orderMapper.selectById(ordersRejectionDTO.getId());
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        orders.setStatus(Orders.CANCELLED);
+        orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        orderMapper.updateById(orders);
+    }
 }
