@@ -30,6 +30,6 @@ public class ShopController {
     Result<?> getShopStatusByUser(){
         Integer status = (Integer) redisUtil.get(RedisConstant.SHOP_STATUS);
         log.info("用户端端查询营业状态: {}", Objects.equals(status, StatusConstant.ENABLE) ? "营业中" : "打烊中");
-        return Result.success();
+        return Result.success(status);
     }
 }

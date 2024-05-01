@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication
 @EnableTransactionManagement //开启注解方式的事务管理
 @Slf4j
-@MapperScan({"com.sky.mapper"})
+//@MapperScan({"com.sky.mapper"})
 @EnableCaching//开启缓存注解
 public class SkyApplication {
     public static void main(String[] args) {
