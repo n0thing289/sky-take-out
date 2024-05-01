@@ -309,4 +309,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
         String json = JSON.toJSONString(map);
         webSocketServer.sendToAllClient(json);
     }
+
+    /**
+     * 用户取消订单
+     * @param id
+     */
+    @Override
+    public void cancel(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelTime(LocalDateTime.now());
+        orders.setCancelReason("用户取消订单");
+        orderMapper.updateById(orders);
+    }
 }
