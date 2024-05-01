@@ -414,6 +414,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
         orders.setStatus(Orders.CANCELLED);
+        orders.setCancelReason(ordersRejectionDTO.getRejectionReason());
+        orders.setCancelTime(LocalDateTime.now());
         orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
         orderMapper.updateById(orders);
     }
