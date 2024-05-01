@@ -1,10 +1,7 @@
 package com.sky.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.sky.dto.OrdersHistoryPageQueryDTO;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.Orders;
 import com.sky.result.PageResult;
 import com.sky.vo.OrderPaymentVO;
@@ -71,4 +68,22 @@ public interface OrderService extends IService<Orders> {
      * @param id
      */
     void cancel(Long id);
+
+    /**
+     * 用户再来一单
+     * @param id
+     */
+    void repetition(Long id);
+
+    /**
+     * 管理端取消订单
+     * @param ordersCancelDTO
+     */
+    void cancel(OrdersCancelDTO ordersCancelDTO);
+
+    /**
+     * 接单
+     * @param id
+     */
+    void confirm(Long id);
 }

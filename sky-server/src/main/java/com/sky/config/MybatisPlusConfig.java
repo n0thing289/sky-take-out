@@ -2,6 +2,7 @@ package com.sky.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @MapperScan("com.sky.mapper")
 public class MybatisPlusConfig {
 
-//    /**
+    //    /**
 //     * 添加分页插件
 //     */
 //    @Bean
@@ -21,4 +22,15 @@ public class MybatisPlusConfig {
 //        //interceptor.addInnerInterceptor(new PaginationInnerInterceptor()); 如果有多数据源可以不配具体类型 否则都建议配上具体的DbType
 //        return interceptor;
 //    }
+
+    /**
+     * 防止恶心全表删除或者更新
+     * @return
+     */
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor());
+        return interceptor;
+    }
 }

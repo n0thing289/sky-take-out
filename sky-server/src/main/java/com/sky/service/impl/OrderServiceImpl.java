@@ -8,10 +8,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersHistoryPageQueryDTO;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -323,6 +320,57 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
         orders.setStatus(Orders.CANCELLED);
         orders.setCancelTime(LocalDateTime.now());
         orders.setCancelReason("用户取消订单");
+        orderMapper.updateById(orders);
+    }
+
+    /**
+     * 用户再来一单
+     * @param id
+     */
+    @Override
+    public void repetition(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        List<OrderDetail> orderDetails = orderDetailMapper.selectList(Wrappers.lambdaQuery(OrderDetail.class)
+                .eq(OrderDetail::getOrderId, orders.getId()));
+        orderDetails.forEach(orderDetail -> {
+            ShoppingCart shoppingCart = new ShoppingCart();
+            BeanUtils.copyProperties(orderDetail, shoppingCart, "id");
+            //user_id
+            shoppingCart.setUserId(orders.getUserId());
+            shoppingCartMapper.insert(shoppingCart);
+        });
+    }
+
+    /**
+     * 管理端取消订单
+     * @param dto
+     */
+    @Override
+    public void cancel(OrdersCancelDTO dto) {
+        Orders orders = orderMapper.selectById(dto.getId());
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelReason(dto.getCancelReason());
+        orders.setCancelTime(LocalDateTime.now());
+        orderMapper.updateById(orders);
+    }
+
+    /**
+     * 接单
+     * @param id
+     */
+    @Override
+    public void confirm(Long id) {
+        Orders orders = orderMapper.selectById(id);
+        if (ObjectUtils.isEmpty(orders)){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        orders.setStatus(Orders.CONFIRMED);
         orderMapper.updateById(orders);
     }
 }
