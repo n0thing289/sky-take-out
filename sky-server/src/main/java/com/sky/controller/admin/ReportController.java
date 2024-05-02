@@ -1,9 +1,7 @@
 package com.sky.controller.admin;
 
 
-import com.sky.dto.DataOverViewQueryDTO;
 import com.sky.result.Result;
-import com.sky.service.OrderService;
 import com.sky.service.ReportService;
 import com.sky.vo.*;
 import io.swagger.annotations.Api;
@@ -11,11 +9,11 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 
 @RestController
@@ -26,6 +24,17 @@ public class ReportController {
 
     @Resource
     private ReportService reportService;
+
+    /**
+     * 导出报表接口
+     * @return
+     */
+    @GetMapping("/export")
+    @ApiOperation("导出报表接口")
+    public void exportExcel(HttpServletResponse response) {
+        log.info("导出报表接口");
+        reportService.exportBusinessExcel(response);
+    }
 
     /**
      * 查询销量排名top10接口
