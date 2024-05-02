@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Select;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper extends BaseMapper<Orders> {
@@ -38,4 +39,18 @@ public interface OrderMapper extends BaseMapper<Orders> {
      * @param endTime
      */
     Double sumAmountByTime(@Param("status") Integer status, @Param("begin") LocalDateTime beginTime, @Param("end") LocalDateTime endTime);
+
+    /**
+     * 根据条件统计订单数量
+     * @param map
+     * @return
+     */
+    Integer countByMap(Map map);
+
+    /**
+     * 根据条件统计营业额
+     * @param map
+     * @return
+     */
+    Double sumByMap(Map map);
 }
