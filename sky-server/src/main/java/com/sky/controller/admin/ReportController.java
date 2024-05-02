@@ -39,7 +39,7 @@ public class ReportController {
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end) {
         log.info("查询销量排名top10接口: begin={},end={}", begin, end);
-        SalesTop10ReportVO vo = reportService.top10(begin, end);
+        SalesTop10ReportVO vo = reportService.top10New(begin, end);
         return Result.success(vo);
     }
 

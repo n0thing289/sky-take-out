@@ -1,6 +1,7 @@
 package com.sky.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.User;
@@ -9,6 +10,7 @@ import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.*;
+import io.swagger.models.auth.In;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Transactional(readOnly = true)
@@ -45,11 +46,9 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public TurnoverReportVO turnoverStatistics(LocalDate begin, LocalDate end) {
         //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
-        List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
-                .select(Orders::getId, Orders::getAmount, Orders::getOrderTime)
+        List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class).select(Orders::getAmount, Orders::getOrderTime)
                 //查询date日期对于的营业额数据, 指的是状态为"已完成"的订单金额合计
-                .eq(Orders::getStatus, Orders.COMPLETED)
-                .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
+                .eq(Orders::getStatus, Orders.COMPLETED).between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
         //计算dateList
         List<LocalDate> dateList = this.getDateList(begin, end);
         String dateListStr = StringUtils.join(dateList, ",");//org.apache.commons.lang3
@@ -61,10 +60,7 @@ public class ReportServiceImpl implements ReportService {
             //当天的最大时间, 例如 2024-05-01 23:59:59
             LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
             //过滤出当天的营业额
-            Optional<BigDecimal> turnOverOp = orders.stream()
-                    .filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime))
-                    .map(Orders::getAmount)
-                    .reduce(BigDecimal::add);
+            Optional<BigDecimal> turnOverOp = orders.stream().filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime)).map(Orders::getAmount).reduce(BigDecimal::add);
             Double turnOver = turnOverOp.map(BigDecimal::doubleValue).orElse(0.0);
             amountList.add(turnOver);
         });
@@ -103,12 +99,10 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public UserReportVO userStatistics(LocalDate begin, LocalDate end) {
         //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
-        List<User> users = userMapper.selectList(Wrappers.lambdaQuery(User.class)
-                .select(User::getId, User::getCreateTime)
-                .between(User::getCreateTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
+        List<User> users = userMapper.selectList(Wrappers.lambdaQuery(User.class).select(User::getCreateTime).between(User::getCreateTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
         //计算dateList
         List<LocalDate> dateList = this.getDateList(begin, end);
-        String dateListStr = StringUtils.join(dateList, ",");//org.apache.commons.lang3
+//        String dateListStr = StringUtils.join(dateList, ",");//org.apache.commons.lang3
         //新增用户数列表
         List<Long> newUserList = new ArrayList<>();
         //总用户量列表
@@ -125,13 +119,11 @@ public class ReportServiceImpl implements ReportService {
             long totalUserCount = users.stream().filter(user -> user.getCreateTime().isBefore(endTime)).count();
             totalUserList.add(totalUserCount);
         });
-        String newUserListStr = StringUtils.join(newUserList, ",");
-        String totalUserListStr = StringUtils.join(totalUserList, ",");
         //封装数据
         return UserReportVO.builder()
-                .dateList(dateListStr)
-                .newUserList(newUserListStr)
-                .totalUserList(totalUserListStr)
+                .dateList(StringUtils.join(dateList, ","))
+                .newUserList(StringUtils.join(newUserList, ","))
+                .totalUserList(StringUtils.join(totalUserList, ","))
                 .build();
     }
 
@@ -145,12 +137,9 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public OrderReportVO ordersStatistics(LocalDate begin, LocalDate end) {
         //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
-        List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
-                .select(Orders::getOrderTime, Orders::getStatus)
-                .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
+        List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class).select(Orders::getOrderTime, Orders::getStatus).between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
         //计算dateList
         List<LocalDate> dateList = this.getDateList(begin, end);
-        String dateListStr = StringUtils.join(dateList, ",");
         //获得每天订单数列表
         List<Long> orderCountList = new ArrayList<>();
         //获得每天有效订单数列表
@@ -161,17 +150,12 @@ public class ReportServiceImpl implements ReportService {
             //当天的最大时间, 例如 2024-05-01 23:59:59
             LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
             //过滤出当天订单数
-            long orderCount = orders.stream()
-                    .filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime)).count();
+            long orderCount = orders.stream().filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime)).count();
             orderCountList.add(orderCount);
             //过滤出当天有效订单
-            long validOrder = orders.stream()
-                    .filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime))
-                    .filter(o -> Orders.COMPLETED.equals(o.getStatus())).count();
+            long validOrder = orders.stream().filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime)).filter(o -> Orders.COMPLETED.equals(o.getStatus())).count();
             validOrderCountList.add(validOrder);
         });
-        String orderCountListStr = StringUtils.join(orderCountList, ",");
-        String validOrderCountListStr = StringUtils.join(validOrderCountList, ",");
         //统计订单总数
         Integer totalOrderCount = orders.size();
         //统计有效订单数
@@ -180,9 +164,9 @@ public class ReportServiceImpl implements ReportService {
         Double orderCompletionRate = ((double) validOrderCount / (double) totalOrderCount);
         //封装数据
         return OrderReportVO.builder()
-                .dateList(dateListStr)//日期列表
-                .orderCountList(orderCountListStr)//订单数列表
-                .validOrderCountList(validOrderCountListStr)//有效订单数列表
+                .dateList(StringUtils.join(dateList, ","))//日期列表
+                .orderCountList(StringUtils.join(orderCountList, ","))//订单数列表
+                .validOrderCountList(StringUtils.join(validOrderCountList, ","))//有效订单数列表
                 .totalOrderCount(totalOrderCount)//订单总数
                 .validOrderCount(validOrderCount)//有效订单数
                 .orderCompletionRate(orderCompletionRate)//订单完成率
@@ -196,18 +180,13 @@ public class ReportServiceImpl implements ReportService {
      * @param end
      * @return
      */
+    @Deprecated
     @Override
     public SalesTop10ReportVO top10(LocalDate begin, LocalDate end) {
         //查出orders的id列表, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
-        List<Long> orderIdList = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
-                        .select(Orders::getId)
-                        .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)))
-                .stream()
-                .map(Orders::getId)
-                .collect(Collectors.toList());
+        List<Long> orderIdList = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class).select(Orders::getId).between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)).eq(Orders::getStatus, Orders.COMPLETED)).stream().map(Orders::getId).collect(Collectors.toList());
         //查询当期订单明细, 根据出现的当期订单id
-        List<OrderDetail> orderDetails = orderDetailMapper.selectList(Wrappers.lambdaQuery(OrderDetail.class)
-                .in(OrderDetail::getOrderId, orderIdList));
+        List<OrderDetail> orderDetails = orderDetailMapper.selectList(Wrappers.lambdaQuery(OrderDetail.class).select(OrderDetail::getName, OrderDetail::getDishId, OrderDetail::getSetmealId, OrderDetail::getNumber).in(OrderDetail::getOrderId, orderIdList));
         List<OrderDetail> orderDetails2 = new ArrayList<>(orderDetails);
         Set<Long> dishIdedList = new HashSet<>();//已经出现过的菜品id
         Set<Long> setmealIdedList = new HashSet<>();//已经出现过的套餐id
@@ -243,8 +222,7 @@ public class ReportServiceImpl implements ReportService {
         List<String> nameList = new ArrayList<>();
         //销量列表
         List<Long> numberList = new ArrayList<>();
-        map.entrySet().stream()
-                .sorted((o1, o2) -> (int) (o2.getValue() - o1.getValue()))//降序
+        map.entrySet().stream().sorted((o1, o2) -> (int) (o2.getValue() - o1.getValue()))//降序
                 .forEach(entry -> {
                     nameList.add(entry.getKey());
                     numberList.add(entry.getValue());
@@ -252,9 +230,32 @@ public class ReportServiceImpl implements ReportService {
         String nameListStr = StringUtils.join(nameList, ",");
         String numberListStr = StringUtils.join(numberList, ",");
         //封装数据
+        return SalesTop10ReportVO.builder().nameList(nameListStr).numberList(numberListStr).build();
+    }
+
+    /**
+     * 查询销量排名top10接口
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public SalesTop10ReportVO top10New(LocalDate begin, LocalDate end) {
+        //获取销量前十的
+        List<GoodsSalesDTO> top10 = orderDetailMapper.getTop10(null, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX));
+        //商品名称列表
+        List<String> nameList = new ArrayList<>();
+        //销量列表
+        List<Integer> numberList = new ArrayList<>();
+        top10.forEach(goods -> {
+            nameList.add(goods.getName());
+            numberList.add(goods.getNumber());
+        });
+        //封装数据
         return SalesTop10ReportVO.builder()
-                .nameList(nameListStr)
-                .numberList(numberListStr)
+                .nameList(StringUtils.join(nameList, ","))
+                .numberList(StringUtils.join(numberList, ","))
                 .build();
     }
 }

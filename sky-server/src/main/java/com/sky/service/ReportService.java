@@ -38,5 +38,8 @@ public interface ReportService {
      * @param end
      * @return
      */
+    @Deprecated
     SalesTop10ReportVO top10(LocalDate begin, LocalDate end);
+
+    SalesTop10ReportVO top10New(LocalDate begin, LocalDate end);
 }
