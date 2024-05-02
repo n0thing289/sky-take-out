@@ -6,11 +6,11 @@ import com.sky.entity.User;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
+import com.sky.vo.OrderReportVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
-import io.swagger.models.auth.In;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +21,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ReportServiceImpl implements ReportService {
 
     @Resource
@@ -45,18 +44,12 @@ public class ReportServiceImpl implements ReportService {
     public TurnoverReportVO turnoverStatistics(LocalDate begin, LocalDate end) {
         //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
         List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
-                .select(Orders::getId)
-                .select(Orders::getAmount)
+                .select(Orders::getId, Orders::getAmount, Orders::getOrderTime)
                 //查询date日期对于的营业额数据, 指的是状态为"已完成"的订单金额合计
                 .eq(Orders::getStatus, Orders.COMPLETED)
                 .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
         //计算dateList
-        List<LocalDate> dateList = new ArrayList<>();
-        while (!begin.equals(end)) {//计算日期, 最后一天手动加进去
-            dateList.add(begin);
-            begin = begin.plusDays(1);
-        }
-        dateList.add(end);
+        List<LocalDate> dateList = this.getDateList(begin, end);
         String dateListStr = StringUtils.join(dateList, ",");//org.apache.commons.lang3
         //查询周期内每一天的金额
         List<Double> amountList = new ArrayList<>();
@@ -82,6 +75,23 @@ public class ReportServiceImpl implements ReportService {
     }
 
     /**
+     * 抽取出来的用于生成日期区间中每一天的list
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    private List<LocalDate> getDateList(LocalDate begin, LocalDate end) {
+        List<LocalDate> dateList = new ArrayList<>();
+        while (!begin.equals(end)) {//计算日期, 最后一天手动加进去
+            dateList.add(begin);
+            begin = begin.plusDays(1);
+        }
+        dateList.add(end);
+        return dateList;
+    }
+
+    /**
      * 用户统计接口
      *
      * @param begin
@@ -90,34 +100,28 @@ public class ReportServiceImpl implements ReportService {
      */
     @Override
     public UserReportVO userStatistics(LocalDate begin, LocalDate end) {
-        //查全部, 把begin和end的期间内要用的数据全部查出来
+        //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
         List<User> users = userMapper.selectList(Wrappers.lambdaQuery(User.class)
-                .select(User::getId)
-                .select(User::getCreateTime)
+                .select(User::getId, User::getCreateTime)
                 .between(User::getCreateTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
         //计算dateList
-        List<LocalDate> dateList = new ArrayList<>();
-        while (!begin.equals(end)) {//计算日期, 最后一天手动加进去
-            dateList.add(begin);
-            begin = begin.plusDays(1);
-        }
-        dateList.add(end);
+        List<LocalDate> dateList = this.getDateList(begin, end);
         String dateListStr = StringUtils.join(dateList, ",");//org.apache.commons.lang3
-        //查询用户每天的新增用户
-        //查询周期内总用户
+        //新增用户数列表
         List<Long> newUserList = new ArrayList<>();
+        //总用户量列表
         List<Long> totalUserList = new ArrayList<>();
         dateList.forEach(date -> {
             //当天的最小时间, 例如 2024-04-25 0:0:0
             LocalDateTime beginTime = LocalDateTime.of(date, LocalTime.MIN);
             //当天的最大时间, 例如 2024-05-01 23:59:59
             LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
-            //过滤users在当天是新增
+            //过滤出当天新增用户数
             long newUserCount = users.stream().filter(user -> user.getCreateTime().isAfter(beginTime) && user.getCreateTime().isBefore(endTime)).count();
             newUserList.add(newUserCount);
-            //求当天总共的数量
-            long allUserCount = users.stream().filter(user -> user.getCreateTime().isBefore(endTime)).count();
-            totalUserList.add(allUserCount);
+            //求出当天总用户量
+            long totalUserCount = users.stream().filter(user -> user.getCreateTime().isBefore(endTime)).count();
+            totalUserList.add(totalUserCount);
         });
         String newUserListStr = StringUtils.join(newUserList, ",");
         String totalUserListStr = StringUtils.join(totalUserList, ",");
@@ -126,6 +130,59 @@ public class ReportServiceImpl implements ReportService {
                 .dateList(dateListStr)
                 .newUserList(newUserListStr)
                 .totalUserList(totalUserListStr)
+                .build();
+    }
+
+    /**
+     * 订单统计接口
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public OrderReportVO ordersStatistics(LocalDate begin, LocalDate end) {
+        //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
+        List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
+                .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
+        //计算dateList
+        List<LocalDate> dateList = this.getDateList(begin, end);
+        String dateListStr = StringUtils.join(dateList, ",");
+        //获得每天订单数列表
+        List<Long> orderCountList = new ArrayList<>();
+        //获得每天有效订单数列表
+        List<Long> validOrderCountList = new ArrayList<>();
+        dateList.forEach(date -> {
+            //当天的最小时间, 例如 2024-04-25 0:0:0
+            LocalDateTime beginTime = LocalDateTime.of(date, LocalTime.MIN);
+            //当天的最大时间, 例如 2024-05-01 23:59:59
+            LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
+            //过滤出当天订单数
+            long orderCount = orders.stream()
+                    .filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime)).count();
+            orderCountList.add(orderCount);
+            //过滤出当天有效订单
+            long validOrder = orders.stream()
+                    .filter(order -> order.getOrderTime().isAfter(beginTime) && order.getOrderTime().isBefore(endTime))
+                    .filter(o -> Orders.COMPLETED.equals(o.getStatus())).count();
+            validOrderCountList.add(validOrder);
+        });
+        String orderCountListStr = StringUtils.join(orderCountList, ",");
+        String validOrderCountListStr = StringUtils.join(validOrderCountList, ",");
+        //统计订单总数
+        Integer totalOrderCount = orders.size();
+        //统计有效订单数
+        Integer validOrderCount = validOrderCountList.stream().reduce(Long::sum).get().intValue();
+        //计算订单完成率
+        Double orderCompletionRate = ((double) validOrderCount / (double) totalOrderCount);
+        //封装数据
+        return OrderReportVO.builder()
+                .dateList(dateListStr)//日期列表
+                .orderCountList(orderCountListStr)//订单数列表
+                .validOrderCountList(validOrderCountListStr)//有效订单数列表
+                .totalOrderCount(totalOrderCount)//订单总数
+                .validOrderCount(validOrderCount)//有效订单数
+                .orderCompletionRate(orderCompletionRate)//订单完成率
                 .build();
     }
 }
