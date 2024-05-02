@@ -1,15 +1,14 @@
 package com.sky.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.User;
+import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.OrderStatisticsVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.vo.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +18,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,6 +31,9 @@ public class ReportServiceImpl implements ReportService {
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private OrderDetailMapper orderDetailMapper;
 
     /**
      * 营业额统计接口
@@ -144,6 +146,7 @@ public class ReportServiceImpl implements ReportService {
     public OrderReportVO ordersStatistics(LocalDate begin, LocalDate end) {
         //查全部, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
         List<Orders> orders = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
+                .select(Orders::getOrderTime, Orders::getStatus)
                 .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)));
         //计算dateList
         List<LocalDate> dateList = this.getDateList(begin, end);
@@ -183,6 +186,75 @@ public class ReportServiceImpl implements ReportService {
                 .totalOrderCount(totalOrderCount)//订单总数
                 .validOrderCount(validOrderCount)//有效订单数
                 .orderCompletionRate(orderCompletionRate)//订单完成率
+                .build();
+    }
+
+    /**
+     * 查询销量排名top10接口
+     *
+     * @param begin
+     * @param end
+     * @return
+     */
+    @Override
+    public SalesTop10ReportVO top10(LocalDate begin, LocalDate end) {
+        //查出orders的id列表, 把begin(最小时间)和end(最大时间)的期间内要用的数据全部查出来
+        List<Long> orderIdList = orderMapper.selectList(Wrappers.lambdaQuery(Orders.class)
+                        .select(Orders::getId)
+                        .between(Orders::getOrderTime, LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX)))
+                .stream()
+                .map(Orders::getId)
+                .collect(Collectors.toList());
+        //查询当期订单明细, 根据出现的当期订单id
+        List<OrderDetail> orderDetails = orderDetailMapper.selectList(Wrappers.lambdaQuery(OrderDetail.class)
+                .in(OrderDetail::getOrderId, orderIdList));
+        List<OrderDetail> orderDetails2 = new ArrayList<>(orderDetails);
+        Set<Long> dishIdedList = new HashSet<>();//已经出现过的菜品id
+        Set<Long> setmealIdedList = new HashSet<>();//已经出现过的套餐id
+        //销量分菜品和套餐, 菜品/套餐在订单明细出现的次数与份数的积,作为销量标准
+        //菜品套餐销量map
+        HashMap<String, Long> map = new HashMap<>();
+        orderDetails.forEach(orderDetail -> {
+            Long dishId = orderDetail.getDishId();
+            if (dishId != null && !dishIdedList.contains(dishId)) {//统计某菜品的销量
+                //过滤出当前的菜品id出现次数
+                long dishIdShowCount = orderDetails2.stream().filter(od -> dishId.equals(od.getDishId())).count();
+                //将当前菜品名字和 菜品id出现次数与份数的积(销量) 放入map
+                map.put(orderDetail.getName(), dishIdShowCount * orderDetail.getNumber());
+                //删去列表中所有含当前菜品id的元素
+                orderDetails2.removeIf(od -> dishId.equals(od.getDishId()));
+                //将出现的菜品id存入dishIdedList
+                dishIdedList.add(dishId);
+            } else {//统计套餐销量
+                Long setmealId = orderDetail.getSetmealId();
+                if (setmealId != null && !setmealIdedList.contains(setmealId)) {
+                    //过滤出当前的套餐id出现次数
+                    long setmealIdShowCount = orderDetails2.stream().filter(od -> setmealId.equals(od.getSetmealId())).count();
+                    //将当前套餐名字和 套餐id出现次数与份数的积(销量) 放入map
+                    map.put(orderDetail.getName(), setmealIdShowCount * orderDetail.getNumber());
+                    //删去列表中所有含当前套餐id的元素
+                    orderDetails2.removeIf(od -> setmealId.equals(od.getSetmealId()));
+                    //将出现的套餐id存入setmealIdedList
+                    setmealIdedList.add(setmealId);
+                }
+            }
+        });
+        //商品名称列表
+        List<String> nameList = new ArrayList<>();
+        //销量列表
+        List<Long> numberList = new ArrayList<>();
+        map.entrySet().stream()
+                .sorted((o1, o2) -> (int) (o2.getValue() - o1.getValue()))//降序
+                .forEach(entry -> {
+                    nameList.add(entry.getKey());
+                    numberList.add(entry.getValue());
+                });
+        String nameListStr = StringUtils.join(nameList, ",");
+        String numberListStr = StringUtils.join(numberList, ",");
+        //封装数据
+        return SalesTop10ReportVO.builder()
+                .nameList(nameListStr)
+                .numberList(numberListStr)
                 .build();
     }
 }
